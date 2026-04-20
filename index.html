@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFM · Sales Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#222;min-height:100vh;padding:20px;}
+
+/* ── Top bar ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.topbar h1{font-size:16px;font-weight:600;letter-spacing:0.3px;}
+.topbar .right{display:flex;align-items:center;gap:12px;font-size:12px;color:#aaa;}
+.refresh-btn{background:#d4a017;color:#1a1a2e;border:none;padding:5px 14px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.3px;}
+.refresh-btn:hover{background:#f0bc30;}
+#status{font-size:11px;display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;background:#d4a017;animation:blink 1.1s infinite;}
+.dot.ready{background:#2ecc71;animation:none;}.dot.error{background:#e74c3c;animation:none;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* ── KPI section ── */
+.kpi-section{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.kpi-group{background:#d0d0d0;border-radius:8px;padding:14px 16px;}
+.kpi-group-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#555;margin-bottom:10px;text-align:center;border-bottom:1px solid #bbb;padding-bottom:6px;}
+.kpi-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kpi-card{background:#fff;border:1px solid #ccc;border-radius:6px;padding:12px 14px;text-align:center;}
+.kpi-card.wide{grid-column:1/-1;}
+.kpi-label{font-size:10px;color:#777;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.kpi-value{font-size:22px;font-weight:700;color:#1a1a2e;}
+.kpi-value.large{font-size:26px;}
+.kpi-delta{font-size:11px;margin-top:3px;}
+.kpi-delta.up{color:#27ae60;}.kpi-delta.down{color:#e74c3c;}
+
+/* ── Table section ── */
+.table-section{background:#1a1a2e;border-radius:8px;overflow:hidden;}
+.table-header{display:flex;justify-content:flex-end;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.table-title{color:#fff;font-size:13px;font-weight:600;letter-spacing:1px;}
+.table-scroll{overflow-x:auto;}
+
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
+thead th{
+  background:#111827;
+  color:#d4a017;
+  padding:9px 10px;
+  text-align:right;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.4px;
+  white-space:nowrap;
+  border-bottom:2px solid #d4a017;
+  position:sticky;top:0;z-index:2;
+}
+thead th:first-child{text-align:left;color:#aaa;font-size:10px;padding-left:14px;}
+thead th:nth-child(2){text-align:left;}
+
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;}
+tbody tr:hover{background:rgba(255,255,255,0.05);}
+tbody td{padding:8px 10px;text-align:right;white-space:nowrap;font-size:11px;}
+tbody td:first-child{color:#888;font-size:10px;padding-left:14px;}
+tbody td:nth-child(2){text-align:left;color:#fff;font-weight:500;font-size:12px;}
+tbody td.val{color:#eee;}
+tbody td.cur-yr{font-weight:700;font-size:12px;}
+tbody td.zero{color:#555;}
+
+/* heat colours */
+tbody td.h5{background:rgba(39,174,96,0.55);color:#fff;}
+tbody td.h4{background:rgba(39,174,96,0.35);color:#eee;}
+tbody td.h3{background:rgba(39,174,96,0.18);color:#ddd;}
+tbody td.h2{background:rgba(231,76,60,0.18);color:#ddd;}
+tbody td.h1{background:rgba(231,76,60,0.35);color:#eee;}
+
+tfoot tr{background:#111827;border-top:2px solid #d4a017;}
+tfoot td{padding:10px 10px;text-align:right;font-weight:700;color:#d4a017;font-size:12px;white-space:nowrap;}
+tfoot td:first-child{padding-left:14px;color:#888;font-size:10px;}
+tfoot td:nth-child(2){text-align:left;color:#fff;}
+tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
+
+.footnote{font-size:10px;color:#888;text-align:right;margin-top:6px;font-family:monospace;}
+
+.skel{background:linear-gradient(90deg,#1a1a2e 25%,#243050 50%,#1a1a2e 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;height:320px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+@media(max-width:700px){.kpi-section{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <h1>Cape Fringe Manufacturers · Sales Dashboard</h1>
+  <div class="right">
+    <div id="status"><div class="dot" id="dot"></div><span id="statusMsg">Loading…</span></div>
+    <div id="lastUpd" style="color:#888;font-size:10px;"></div>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- KPI cards -->
+<div class="kpi-section">
+  <!-- Calendar stats -->
+  <div class="kpi-group">
+    <div class="kpi-group-title">Calendar</div>
+    <div class="kpi-cards">
+      <div class="kpi-card"><div class="kpi-label">Days Used</div><div class="kpi-value" id="daysUsed">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Days Remaining</div><div class="kpi-value" id="daysLeft">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">% of Year Completed</div><div class="kpi-value" id="pctDone">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">% of Year Left</div><div class="kpi-value" id="pctLeft">—</div></div>
+    </div>
+  </div>
+  <!-- Monthly stats -->
+  <div class="kpi-group">
+    <div class="kpi-group-title">Monthly Stats</div>
+    <div class="kpi-cards">
+      <div class="kpi-card"><div class="kpi-label">Last Year Month to Date</div><div class="kpi-value" id="lyMTD">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Sum of Current MTD</div><div class="kpi-value" id="curMTD">—</div></div>
+    </div>
+  </div>
+  <!-- Yearly stats -->
+  <div class="kpi-group">
+    <div class="kpi-group-title">Yearly Stats</div>
+    <div class="kpi-cards">
+      <div class="kpi-card wide"><div class="kpi-label">Previous Year Total</div><div class="kpi-value large" id="prevYrTotal">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Previous Year to Date</div><div class="kpi-value" id="prevYTD">—</div></div>
+      <div class="kpi-card">
+        <div class="kpi-label">Year to Date</div>
+        <div class="kpi-value" id="curYTD">—</div>
+        <div class="kpi-delta" id="ytdDelta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pivot table -->
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">YEAR / SALES</div>
+  </div>
+  <div class="table-scroll">
+    <div id="tblArea"><div class="skel"></div></div>
+  </div>
+</div>
+<div class="footnote" id="footnote"></div>
+
+<script>
+const SHEET_ID = '1HkpEjPrAUtd3rew1E3cyWlhh0-EYfOBVVRdPtZd_tQ8';
+const GID      = '1199061921';
+const URL      = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+
+// Fiscal order: Mar=3, Apr=4, ... Dec=12, Jan=1, Feb=2
+const FISCAL_MONTHS = [3,4,5,6,7,8,9,10,11,12,1,2];
+const FISCAL_LABELS = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
+const FISCAL_NOS    = ['1.','2.','3.','4.','5.','6.','7.','8.','9.','10.','1.','1.'];
+
+function setStatus(msg,state){
+  document.getElementById('statusMsg').textContent=msg;
+  document.getElementById('dot').className='dot'+(state?' '+state:'');
+}
+function fmtR(n,short){
+  if(!n&&n!==0)return'—';
+  if(short){
+    const a=Math.abs(n);
+    if(a>=1e6)return'R'+(n/1e6).toFixed(1)+'M';
+    if(a>=1e3)return'R'+Math.round(n/1e3)+'K';
+    return'R'+Math.round(n);
+  }
+  return'R'+Math.round(n).toLocaleString('en-ZA');
+}
+function fmtPct(n){return(n>=0?'+':'')+n.toFixed(1)+'%';}
+
+// CSV parser
+function splitLine(line){
+  const out=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){out.push(cur);cur='';}
+    else cur+=c;
+  }
+  out.push(cur);return out;
+}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/);
+  const hdrs=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const cols=splitLine(lines[i]).map(c=>c.replace(/^"|"$/g,'').trim());
+    const obj={};hdrs.forEach((h,j)=>obj[h]=cols[j]||'');
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function buildPivot(rows){
+  const p={};
+  let maxDay=0, maxMo=0, maxYr=0;
+  rows.forEach(row=>{
+    const d=(row['Date']||'').trim();
+    const a=(row['NetAmount']||'').trim();
+    if(!d||!a)return;
+    const pts=d.split('/');
+    if(pts.length!==3)return;
+    const dy=parseInt(pts[0]),mo=parseInt(pts[1]),yr=parseInt(pts[2]);
+    if(!p[yr])p[yr]={};
+    if(!p[yr][mo])p[yr][mo]=0;
+    const amt=parseFloat(a.replace(/[R\s,]/g,''));
+    if(isNaN(amt))return;
+    p[yr][mo]+=amt;
+    // track latest date
+    if(yr>maxYr||(yr===maxYr&&mo>maxMo)||(yr===maxYr&&mo===maxMo&&dy>maxDay)){
+      maxYr=yr;maxMo=mo;maxDay=dy;
+    }
+  });
+  return{p,maxYr,maxMo,maxDay};
+}
+
+// Heat class: compare value to array of all values for that fiscal row
+function heatClass(val, allVals){
+  if(!val||val===0)return'zero';
+  const valid=allVals.filter(v=>v>0);
+  if(valid.length<2)return'val';
+  const mn=Math.min(...valid),mx=Math.max(...valid);
+  if(mx===mn)return'val';
+  const pct=(val-mn)/(mx-mn);
+  if(pct>0.8)return'h5';
+  if(pct>0.6)return'h4';
+  if(pct>0.4)return'h3';
+  if(pct>0.2)return'val';
+  return'h2';
+}
+
+function renderKPIs(p, maxYr, maxMo, maxDay){
+  const today=new Date(2026,3,20); // April 20 2026
+  const startOfYear=new Date(today.getFullYear(),0,1);
+  const daysUsed=Math.floor((today-startOfYear)/(86400000))+1;
+  const daysInYear=365+(today.getFullYear()%4===0?1:0);
+  const daysLeft=daysInYear-daysUsed;
+  document.getElementById('daysUsed').textContent=daysUsed;
+  document.getElementById('daysLeft').textContent=daysLeft;
+  document.getElementById('pctDone').textContent=(daysUsed/daysInYear*100).toFixed(2)+'%';
+  document.getElementById('pctLeft').textContent=(daysLeft/daysInYear*100).toFixed(2)+'%';
+
+  const curYr=today.getFullYear(); // 2026
+  const prevYr=curYr-1;           // 2025
+
+  // Previous year total
+  const prevTotal=Object.values(p[prevYr]||{}).reduce((a,v)=>a+v,0);
+  document.getElementById('prevYrTotal').textContent=fmtR(prevTotal);
+
+  // YTD = sum of months in curYr up to current month
+  const curMo=today.getMonth()+1; // April = 4
+  let curYTD=0;
+  for(let m=1;m<=curMo;m++) curYTD+=(p[curYr]||{})[m]||0;
+
+  // Prev YTD = same months in prevYr
+  let prevYTD=0;
+  for(let m=1;m<=curMo;m++) prevYTD+=(p[prevYr]||{})[m]||0;
+
+  document.getElementById('prevYTD').textContent=fmtR(prevYTD);
+  document.getElementById('curYTD').textContent=fmtR(curYTD);
+  const ytdPct=prevYTD>0?(curYTD-prevYTD)/prevYTD*100:0;
+  const deltaEl=document.getElementById('ytdDelta');
+  deltaEl.textContent=fmtPct(ytdPct);
+  deltaEl.className='kpi-delta '+(ytdPct>=0?'up':'down');
+
+  // MTD: current month to today's day
+  // Current MTD = curYr current month total (approximation — all data in that month)
+  const curMTD=(p[curYr]||{})[curMo]||0;
+  const lyMTD=(p[prevYr]||{})[curMo]||0;
+  document.getElementById('curMTD').textContent=fmtR(curMTD);
+  document.getElementById('lyMTD').textContent=fmtR(lyMTD);
+}
+
+function renderTable(p, maxYr){
+  const allYears=Object.keys(p).map(Number).sort();
+  const curYr=2026;
+
+  // Year totals
+  const yearTotals={};
+  allYears.forEach(y=>yearTotals[y]=Object.values(p[y]).reduce((a,v)=>a+v,0));
+
+  // Row totals
+  const rowTotals={};
+  FISCAL_MONTHS.forEach(m=>{rowTotals[m]=allYears.reduce((a,y)=>a+(p[y]&&p[y][m]?p[y][m]:0),0);});
+
+  // Grand total
+  const grand=allYears.reduce((a,y)=>a+yearTotals[y],0);
+
+  let h=`<table>
+<thead><tr>
+  <th>F.</th>
+  <th>Month</th>
+  ${allYears.map(y=>`<th${y===curYr?' style="color:#f0bc30"':''}>${y}</th>`).join('')}
+</tr></thead><tbody>`;
+
+  FISCAL_MONTHS.forEach((mo,fi)=>{
+    const rowVals=allYears.map(y=>(p[y]&&p[y][mo]?p[y][mo]:0));
+    h+=`<tr>
+  <td>${FISCAL_NOS[fi]}</td>
+  <td>${FISCAL_LABELS[fi]}</td>
+  ${allYears.map((y,i)=>{
+    const v=rowVals[i];
+    if(!v||v===0)return`<td class="zero">-</td>`;
+    const cls=heatClass(v,rowVals)+(y===curYr?' cur-yr':'');
+    return`<td class="${cls}">${fmtR(v)}</td>`;
+  }).join('')}
+</tr>`;
+  });
+
+  h+=`</tbody><tfoot><tr>
+  <td></td>
+  <td>Grand total</td>
+  ${allYears.map(y=>`<td class="${y===curYr?'cur-yr':''}">${fmtR(yearTotals[y])}</td>`).join('')}
+</tr></tfoot></table>`;
+
+  document.getElementById('tblArea').innerHTML=h;
+}
+
+async function loadData(){
+  setStatus('Fetching from Google Sheets…','');
+  document.getElementById('tblArea').innerHTML='<div class="skel"></div>';
+  ['daysUsed','daysLeft','pctDone','pctLeft','prevYrTotal','prevYTD','curYTD','curMTD','lyMTD']
+    .forEach(id=>document.getElementById(id).textContent='—');
+
+  try{
+    const r=await fetch(URL,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const text=await r.text();
+    if(!text||text.length<50)throw new Error('Empty response');
+    const rows=parseCSV(text);
+    const{p,maxYr,maxMo,maxDay}=buildPivot(rows);
+    renderKPIs(p,maxYr,maxMo,maxDay);
+    renderTable(p,maxYr);
+    const now=new Date().toLocaleString('en-ZA',{dateStyle:'medium',timeStyle:'short'});
+    document.getElementById('lastUpd').textContent='Updated: '+now;
+    document.getElementById('footnote').textContent=
+      rows.length.toLocaleString()+' source rows · years '+Object.keys(p).sort().join(', ')+' · live from Google Sheets';
+    setStatus('Loaded','ready');
+  }catch(e){
+    setStatus('Error: '+e.message,'error');
+    document.getElementById('tblArea').innerHTML=
+      `<div style="padding:24px;color:#e74c3c;font-size:12px;">
+        <strong>Could not load data.</strong><br>${e.message}<br><br>
+        Make sure the sheet is shared as "Anyone with the link → Viewer" and click Refresh.
+      </div>`;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
