@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFM · Sales Pivot 2019–2022</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --bg:       #0a1628;
+  --surface:  #0f1f3d;
+  --surface2: #162847;
+  --border:   rgba(255,255,255,0.07);
+  --gold:     #d4a017;
+  --gold-hi:  #f0bc30;
+  --gold-dim: rgba(212,160,23,0.12);
+  --white:    #eef2f8;
+  --muted:    #5a7499;
+  --green:    #1fbe7a;
+  --red:      #e05555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+  padding: 36px 28px 56px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header-left h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+.header-left h1 em { font-style: normal; color: var(--gold-hi); }
+.header-left p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--muted);
+  margin-top: 5px; letter-spacing: 0.3px;
+}
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.refresh-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px; border-radius: 4px;
+  cursor: pointer; letter-spacing: 0.5px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+#last-updated { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+
+/* Status */
+#status {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px; margin-bottom: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--muted);
+  transition: border-color 0.3s;
+}
+#status.ready { border-color: rgba(31,190,122,0.3); }
+#status.error { border-color: rgba(224,85,85,0.35); }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gold); flex-shrink: 0;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+#status.ready .dot { background: var(--green); animation: none; }
+#status.error .dot { background: var(--red);   animation: none; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
+
+/* KPI strip */
+.kpi-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 18px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi:hover { border-color: rgba(212,160,23,0.25); }
+.kpi::after {
+  content: ''; position: absolute;
+  top: -20px; right: -20px;
+  width: 70px; height: 70px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,160,23,0.1), transparent 70%);
+}
+.kpi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;
+}
+.kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; color: var(--white); }
+.kpi-sub   { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* Table */
+.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; min-width: 600px;
+}
+thead th {
+  background: var(--surface2);
+  padding: 13px 20px; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.6px; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid rgba(212,160,23,0.3);
+  color: var(--gold-hi);
+}
+thead th:first-child { text-align: left; color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+thead th.col-total { color: var(--white); }
+
+tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.1s; }
+tbody tr:hover { background: rgba(212,160,23,0.05); }
+tbody td { padding: 10px 20px; text-align: right; color: var(--muted); white-space: nowrap; }
+tbody td:first-child {
+  text-align: left; font-family: 'Syne', sans-serif;
+  font-weight: 500; font-size: 12px; color: var(--white);
+}
+tbody td.val { color: var(--white); }
+tbody td.row-total { color: var(--gold-hi); font-weight: 500; }
+
+tfoot tr { border-top: 1px solid rgba(212,160,23,0.3); background: var(--gold-dim); }
+tfoot td { padding: 12px 20px; text-align: right; font-weight: 600; color: var(--gold-hi); font-size: 12px; white-space: nowrap; }
+tfoot td:first-child { text-align: left; font-family: 'Syne', sans-serif; }
+
+.skel {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite; border-radius: 4px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+.footnote { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 10px; text-align: right; }
+
+@media (max-width: 640px) {
+  .kpi-strip { grid-template-columns: 1fr 1fr; }
+  body { padding: 20px 14px 40px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Cape Fringe · <em>Sales Pivot</em></h1>
+    <p>NET AMOUNT BY MONTH &amp; YEAR · LIVE FROM GOOGLE SHEETS</p>
+  </div>
+  <div class="header-right">
+    <button class="refresh-btn" onclick="loadData()">↻ REFRESH</button>
+    <div id="last-updated">—</div>
+  </div>
+</div>
+
+<div id="status"><div class="dot"></div><span id="status-msg">Fetching data from Google Sheets…</span></div>
+
+<div class="kpi-strip">
+  <div class="kpi"><div class="kpi-label">4-Year Total</div><div class="kpi-value" id="k-total">—</div><div class="kpi-sub">2019 – 2022</div></div>
+  <div class="kpi"><div class="kpi-label">Best Year</div><div class="kpi-value" id="k-yr">—</div><div class="kpi-sub" id="k-yr-sub">—</div></div>
+  <div class="kpi"><div class="kpi-label">Best Month</div><div class="kpi-value" id="k-mo">—</div><div class="kpi-sub" id="k-mo-sub">—</div></div>
+  <div class="kpi"><div class="kpi-label">Avg / Month</div><div class="kpi-value" id="k-avg">—</div><div class="kpi-sub">all years</div></div>
+</div>
+
+<div class="table-card">
+  <div class="table-scroll" id="table-area">
+    <div class="skel" style="height:340px;"></div>
+  </div>
+</div>
+<div class="footnote" id="footnote"></div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+const SHEET_ID = '1HkpEjPrAUtd3rew1E3cyWlhh0-EYfOBVVRdPtZd_tQ8';
+const GID      = '1199061921';
+// gviz/tq endpoint: CORS-friendly, works in any browser for public sheets
+const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+
+const YEARS  = [2019,2020,2021,2022];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setStatus(msg, state='loading') {
+  const el = document.getElementById('status');
+  el.className = state;
+  document.getElementById('status-msg').textContent = msg;
+}
+function fmtR(n) {
+  if (!n && n !== 0) return '—';
+  return 'R\u00a0' + Math.round(n).toLocaleString('en-ZA');
+}
+function fmtShort(n) {
+  if (!n || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e6) return 'R\u00a0' + (n/1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return 'R\u00a0' + Math.round(n/1e3) + 'K';
+  return 'R\u00a0' + Math.round(n);
+}
+
+// ── CSV parser (handles quoted fields containing commas) ───────────────────
+function splitLine(line) {
+  const out = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const cols = splitLine(lines[i]).map(c => c.replace(/^"|"$/g,'').trim());
+    const obj = {};
+    headers.forEach((h, j) => obj[h] = cols[j] || '');
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// ── Build pivot: sum NetAmount by year+month ───────────────────────────────
+function buildPivot(rows) {
+  const pivot = {};
+  YEARS.forEach(y => { pivot[y] = {}; for (let m=1;m<=12;m++) pivot[y][m]=0; });
+  let counted = 0;
+  rows.forEach(row => {
+    const d = (row['Date'] || '').trim();
+    const a = (row['NetAmount'] || '').trim();
+    if (!d || !a) return;
+    const parts = d.split('/');
+    if (parts.length !== 3) return;
+    const yr = parseInt(parts[2]);
+    const mo = parseInt(parts[1]);
+    if (!YEARS.includes(yr) || mo < 1 || mo > 12) return;
+    // Strip currency symbol, commas, spaces — keep minus sign
+    const clean = a.replace(/[R\s,]/g, '');
+    const amt = parseFloat(clean);
+    if (isNaN(amt)) return;
+    pivot[yr][mo] += amt;
+    counted++;
+  });
+  return { pivot, counted };
+}
+
+// ── Render KPI cards ───────────────────────────────────────────────────────
+function renderKPIs(pivot) {
+  let grand=0, byYr={}, bestMoAmt=0, bestMoLabel='', moCount=0;
+  YEARS.forEach(y => {
+    let yt=0;
+    for (let m=1;m<=12;m++) {
+      const v=pivot[y][m];
+      if (v>0){grand+=v;yt+=v;moCount++;}
+      if (v>bestMoAmt){bestMoAmt=v;bestMoLabel=MONTHS[m-1].slice(0,3)+' '+y;}
+    }
+    byYr[y]=yt;
+  });
+  const bestYr = YEARS.reduce((a,y)=>byYr[y]>byYr[a]?y:a, YEARS[0]);
+  document.getElementById('k-total').textContent  = fmtShort(grand);
+  document.getElementById('k-yr').textContent     = fmtShort(byYr[bestYr]);
+  document.getElementById('k-yr-sub').textContent = String(bestYr);
+  document.getElementById('k-mo').textContent     = fmtShort(bestMoAmt);
+  document.getElementById('k-mo-sub').textContent = bestMoLabel;
+  document.getElementById('k-avg').textContent    = fmtShort(moCount>0 ? grand/moCount : 0);
+}
+
+// ── Render pivot table ─────────────────────────────────────────────────────
+function renderTable(pivot) {
+  const yearTotals = {};
+  YEARS.forEach(y => yearTotals[y] = Object.values(pivot[y]).reduce((a,v)=>a+v,0));
+  const grand = YEARS.reduce((a,y)=>a+yearTotals[y],0);
+  const rowTotals = {};
+  for (let m=1;m<=12;m++) rowTotals[m] = YEARS.reduce((a,y)=>a+(pivot[y][m]||0),0);
+
+  let html = `<table>
+<thead><tr>
+  <th>Month</th>
+  ${YEARS.map(y=>`<th>${y}</th>`).join('')}
+  <th class="col-total">Row Total</th>
+</tr></thead><tbody>`;
+
+  for (let m=1;m<=12;m++) {
+    html += `<tr><td>${MONTHS[m-1]}</td>`;
+    YEARS.forEach(y => {
+      const v = pivot[y][m];
+      html += v > 0 ? `<td class="val">${fmtR(v)}</td>` : `<td>—</td>`;
+    });
+    html += `<td class="row-total">${rowTotals[m]>0 ? fmtR(rowTotals[m]) : '—'}</td></tr>`;
+  }
+
+  html += `</tbody><tfoot><tr>
+  <td>Year Total</td>
+  ${YEARS.map(y=>`<td>${fmtR(yearTotals[y])}</td>`).join('')}
+  <td>${fmtR(grand)}</td>
+</tr></tfoot></table>`;
+
+  document.getElementById('table-area').innerHTML = html;
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+async function loadData() {
+  setStatus('Fetching latest data from Google Sheets…');
+  document.getElementById('table-area').innerHTML = '<div class="skel" style="height:340px;"></div>';
+  ['k-total','k-yr','k-yr-sub','k-mo','k-mo-sub','k-avg']
+    .forEach(id => document.getElementById(id).textContent = '—');
+
+  try {
+    const response = await fetch(DATA_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status} — check sheet sharing settings`);
+    const text = await response.text();
+    if (!text || text.length < 50) throw new Error('Empty response from Google Sheets');
+
+    const rows = parseCSV(text);
+    if (rows.length === 0) throw new Error('No rows could be parsed');
+
+    const { pivot, counted } = buildPivot(rows);
+
+    renderKPIs(pivot);
+    renderTable(pivot);
+
+    const now = new Date().toLocaleString('en-ZA', { dateStyle:'medium', timeStyle:'short' });
+    document.getElementById('last-updated').textContent = `Updated: ${now}`;
+    document.getElementById('footnote').textContent =
+      `${rows.length.toLocaleString()} source rows · ${counted.toLocaleString()} matched 2019–2022 · live from Google Sheets`;
+    setStatus(`Loaded — ${counted.toLocaleString()} transactions across 2019–2022.`, 'ready');
+
+  } catch(err) {
+    setStatus('Error: ' + err.message, 'error');
+    document.getElementById('table-area').innerHTML =
+      `<div style="padding:28px 24px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:#e05555;">
+        <strong>Could not load data.</strong><br><br>
+        Error: ${err.message}<br><br>
+        <span style="color:#5a7499;">
+          Make sure the sheet is shared:<br>
+          Google Sheets → Share → Change to <em>Anyone with the link</em> → Viewer<br><br>
+          Then click ↻ REFRESH above.
+        </span>
+      </div>`;
+    console.error(err);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
