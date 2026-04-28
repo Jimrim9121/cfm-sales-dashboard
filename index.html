@@ -10,7 +10,6 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#222;min-height:100vh;padding:20px;}
 
-/* ── Top bar ── */
 .topbar{display:flex;justify-content:space-between;align-items:center;background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
 .topbar h1{font-size:16px;font-weight:600;letter-spacing:0.3px;}
 .topbar .right{display:flex;align-items:center;gap:12px;font-size:12px;color:#aaa;}
@@ -21,7 +20,6 @@ body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#222;min-height:100
 .dot.ready{background:#2ecc71;animation:none;}.dot.error{background:#e74c3c;animation:none;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
-/* ── KPI section ── */
 .kpi-section{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
 .kpi-group{background:#d0d0d0;border-radius:8px;padding:14px 16px;}
 .kpi-group-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#555;margin-bottom:10px;text-align:center;border-bottom:1px solid #bbb;padding-bottom:6px;}
@@ -34,7 +32,6 @@ body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#222;min-height:100
 .kpi-delta{font-size:11px;margin-top:3px;}
 .kpi-delta.up{color:#27ae60;}.kpi-delta.down{color:#e74c3c;}
 
-/* ── Table section ── */
 .table-section{background:#1a1a2e;border-radius:8px;overflow:hidden;}
 .table-header{display:flex;justify-content:flex-end;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
 .table-title{color:#fff;font-size:13px;font-weight:600;letter-spacing:1px;}
@@ -42,16 +39,9 @@ body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#222;min-height:100
 
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
 thead th{
-  background:#111827;
-  color:#d4a017;
-  padding:9px 10px;
-  text-align:right;
-  font-size:11px;
-  font-weight:600;
-  letter-spacing:0.4px;
-  white-space:nowrap;
-  border-bottom:2px solid #d4a017;
-  position:sticky;top:0;z-index:2;
+  background:#111827;color:#d4a017;padding:9px 10px;text-align:right;
+  font-size:11px;font-weight:600;letter-spacing:0.4px;white-space:nowrap;
+  border-bottom:2px solid #d4a017;position:sticky;top:0;z-index:2;
 }
 thead th:first-child{text-align:left;color:#aaa;font-size:10px;padding-left:14px;}
 thead th:nth-child(2){text-align:left;}
@@ -65,7 +55,6 @@ tbody td.val{color:#eee;}
 tbody td.cur-yr{font-weight:700;font-size:12px;}
 tbody td.zero{color:#555;}
 
-/* heat colours */
 tbody td.h5{background:rgba(39,174,96,0.55);color:#fff;}
 tbody td.h4{background:rgba(39,174,96,0.35);color:#eee;}
 tbody td.h3{background:rgba(39,174,96,0.18);color:#ddd;}
@@ -88,7 +77,6 @@ tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
 </head>
 <body>
 
-<!-- Top bar -->
 <div class="topbar">
   <h1>Cape Fringe Manufacturers · Sales Dashboard</h1>
   <div class="right">
@@ -98,9 +86,7 @@ tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
   </div>
 </div>
 
-<!-- KPI cards -->
 <div class="kpi-section">
-  <!-- Calendar stats -->
   <div class="kpi-group">
     <div class="kpi-group-title">Calendar</div>
     <div class="kpi-cards">
@@ -110,7 +96,6 @@ tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
       <div class="kpi-card"><div class="kpi-label">% of Year Left</div><div class="kpi-value" id="pctLeft">—</div></div>
     </div>
   </div>
-  <!-- Monthly stats -->
   <div class="kpi-group">
     <div class="kpi-group-title">Monthly Stats</div>
     <div class="kpi-cards">
@@ -118,7 +103,6 @@ tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
       <div class="kpi-card"><div class="kpi-label">Sum of Current MTD</div><div class="kpi-value" id="curMTD">—</div></div>
     </div>
   </div>
-  <!-- Yearly stats -->
   <div class="kpi-group">
     <div class="kpi-group-title">Yearly Stats</div>
     <div class="kpi-cards">
@@ -133,10 +117,9 @@ tfoot td.cur-yr{color:#f0bc30;font-size:13px;}
   </div>
 </div>
 
-<!-- Pivot table -->
 <div class="table-section">
   <div class="table-header">
-    <div class="table-title">YEAR / SALES</div>
+    <div class="table-title" id="tableTitle">YEAR / SALES</div>
   </div>
   <div class="table-scroll">
     <div id="tblArea"><div class="skel"></div></div>
@@ -149,15 +132,56 @@ const SHEET_ID = '1HkpEjPrAUtd3rew1E3cyWlhh0-EYfOBVVRdPtZd_tQ8';
 const GID      = '1199061921';
 const URL      = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
-// Fiscal order: Mar=3, Apr=4, ... Dec=12, Jan=1, Feb=2
+// Fiscal year order: Mar(3) through Feb(2)
 const FISCAL_MONTHS = [3,4,5,6,7,8,9,10,11,12,1,2];
 const FISCAL_LABELS = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
-const FISCAL_NOS    = ['1.','2.','3.','4.','5.','6.','7.','8.','9.','10.','1.','1.'];
+const FISCAL_NOS    = ['1.','2.','3.','4.','5.','6.','7.','8.','9.','10.','11.','12.'];
+
+// ── Fiscal year helpers ──────────────────────────────────────────────────────
+// Cape Fringe financial year: 1 March – last day of February.
+// A date in Jan or Feb belongs to the FY that STARTED the previous March.
+// e.g. Jan 2026 → FY2025 (started 1 Mar 2025, ends 28 Feb 2026)
+//      Apr 2025 → FY2025 (started 1 Mar 2025)
+//      Mar 2026 → FY2026 (started 1 Mar 2026)
+
+function fiscalYear(calYear, calMonth) {
+  // Returns the FY label year (= the March start year).
+  return calMonth >= 3 ? calYear : calYear - 1;
+}
+
+function fiscalYearStart(fy) {
+  // 1 March of the FY start year
+  return new Date(fy, 2, 1); // month 2 = March (0-indexed)
+}
+
+function fiscalYearEnd(fy) {
+  // Last day of February of fy+1
+  // Day 0 of March = last day of February
+  return new Date(fy + 1, 2, 0);
+}
+
+function daysInFiscalYear(fy) {
+  const start = fiscalYearStart(fy);
+  const end   = fiscalYearEnd(fy);
+  return Math.round((end - start) / 86400000) + 1;
+}
+
+// How many fiscal months have elapsed up to and including calMonth/calYear?
+// Returns a count 1–12 where 1 = Mar elapsed, 12 = Feb elapsed.
+function fiscalMonthIndex(calYear, calMonth) {
+  // FISCAL_MONTHS = [3,4,5,6,7,8,9,10,11,12,1,2]
+  return FISCAL_MONTHS.indexOf(calMonth); // 0-based; add 1 for count
+}
+
+// ── Pivot uses FY keys instead of calendar year keys ────────────────────────
+// The pivot object will be keyed by FY (e.g. 2025 for Mar2025-Feb2026).
+// Each FY key holds an object keyed by calendar month number (1–12).
 
 function setStatus(msg,state){
   document.getElementById('statusMsg').textContent=msg;
   document.getElementById('dot').className='dot'+(state?' '+state:'');
 }
+
 function fmtR(n,short){
   if(!n&&n!==0)return'—';
   if(short){
@@ -168,9 +192,9 @@ function fmtR(n,short){
   }
   return'R'+Math.round(n).toLocaleString('en-ZA');
 }
+
 function fmtPct(n){return(n>=0?'+':'')+n.toFixed(1)+'%';}
 
-// CSV parser
 function splitLine(line){
   const out=[];let cur='',inQ=false;
   for(let i=0;i<line.length;i++){
@@ -181,6 +205,7 @@ function splitLine(line){
   }
   out.push(cur);return out;
 }
+
 function parseCSV(text){
   const lines=text.split(/\r?\n/);
   const hdrs=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
@@ -195,8 +220,10 @@ function parseCSV(text){
 }
 
 function buildPivot(rows){
+  // p[fy][calMonth] = total sales
   const p={};
-  let maxDay=0, maxMo=0, maxYr=0;
+  let maxDay=0, maxMo=0, maxYr=0, maxFY=0;
+
   rows.forEach(row=>{
     const d=(row['Date']||'').trim();
     const a=(row['NetAmount']||'').trim();
@@ -204,21 +231,22 @@ function buildPivot(rows){
     const pts=d.split('/');
     if(pts.length!==3)return;
     const dy=parseInt(pts[0]),mo=parseInt(pts[1]),yr=parseInt(pts[2]);
-    if(!p[yr])p[yr]={};
-    if(!p[yr][mo])p[yr][mo]=0;
+    const fy=fiscalYear(yr,mo);
+    if(!p[fy])p[fy]={};
+    if(!p[fy][mo])p[fy][mo]=0;
     const amt=parseFloat(a.replace(/[R\s,]/g,''));
     if(isNaN(amt))return;
-    p[yr][mo]+=amt;
-    // track latest date
+    p[fy][mo]+=amt;
+
+    // Track latest calendar date
     if(yr>maxYr||(yr===maxYr&&mo>maxMo)||(yr===maxYr&&mo===maxMo&&dy>maxDay)){
-      maxYr=yr;maxMo=mo;maxDay=dy;
+      maxYr=yr;maxMo=mo;maxDay=dy;maxFY=fy;
     }
   });
-  return{p,maxYr,maxMo,maxDay};
+  return{p,maxYr,maxMo,maxDay,maxFY};
 }
 
-// Heat class: compare value to array of all values for that fiscal row
-function heatClass(val, allVals){
+function heatClass(val,allVals){
   if(!val||val===0)return'zero';
   const valid=allVals.filter(v=>v>0);
   if(valid.length<2)return'val';
@@ -233,78 +261,104 @@ function heatClass(val, allVals){
 }
 
 function renderKPIs(p, maxYr, maxMo, maxDay){
-  const today=new Date(2026,3,20); // April 20 2026
-  const startOfYear=new Date(today.getFullYear(),0,1);
-  const daysUsed=Math.floor((today-startOfYear)/(86400000))+1;
-  const daysInYear=365+(today.getFullYear()%4===0?1:0);
-  const daysLeft=daysInYear-daysUsed;
-  document.getElementById('daysUsed').textContent=daysUsed;
-  document.getElementById('daysLeft').textContent=daysLeft;
-  document.getElementById('pctDone').textContent=(daysUsed/daysInYear*100).toFixed(2)+'%';
-  document.getElementById('pctLeft').textContent=(daysLeft/daysInYear*100).toFixed(2)+'%';
+  const today = new Date();
 
-  const curYr=today.getFullYear(); // 2026
-  const prevYr=curYr-1;           // 2025
+  // Current FY and previous FY
+  const curFY  = fiscalYear(today.getFullYear(), today.getMonth()+1);
+  const prevFY = curFY - 1;
 
-  // Previous year total
-  const prevTotal=Object.values(p[prevYr]||{}).reduce((a,v)=>a+v,0);
-  document.getElementById('prevYrTotal').textContent=fmtR(prevTotal);
+  // ── Calendar KPIs (fiscal year days) ──
+  const fyStart   = fiscalYearStart(curFY);
+  const fyEnd     = fiscalYearEnd(curFY);
+  const totalDays = daysInFiscalYear(curFY);
 
-  // YTD = sum of months in curYr up to current month
-  const curMo=today.getMonth()+1; // April = 4
-  let curYTD=0;
-  for(let m=1;m<=curMo;m++) curYTD+=(p[curYr]||{})[m]||0;
+  // Days used = today - fyStart + 1 (inclusive)
+  const daysUsed = Math.floor((today - fyStart) / 86400000) + 1;
+  const daysLeft = totalDays - daysUsed;
 
-  // Prev YTD = same months in prevYr
-  let prevYTD=0;
-  for(let m=1;m<=curMo;m++) prevYTD+=(p[prevYr]||{})[m]||0;
+  document.getElementById('daysUsed').textContent  = daysUsed;
+  document.getElementById('daysLeft').textContent  = daysLeft;
+  document.getElementById('pctDone').textContent   = (daysUsed / totalDays * 100).toFixed(2) + '%';
+  document.getElementById('pctLeft').textContent   = (daysLeft / totalDays * 100).toFixed(2) + '%';
 
-  document.getElementById('prevYTD').textContent=fmtR(prevYTD);
-  document.getElementById('curYTD').textContent=fmtR(curYTD);
-  const ytdPct=prevYTD>0?(curYTD-prevYTD)/prevYTD*100:0;
-  const deltaEl=document.getElementById('ytdDelta');
-  deltaEl.textContent=fmtPct(ytdPct);
-  deltaEl.className='kpi-delta '+(ytdPct>=0?'up':'down');
+  // ── Yearly KPIs ──
+  // Previous FY total = sum of all 12 months in prevFY
+  const prevTotal = Object.values(p[prevFY]||{}).reduce((a,v)=>a+v,0);
+  document.getElementById('prevYrTotal').textContent = fmtR(prevTotal);
 
-  // MTD: current month to today's day
-  // Current MTD = curYr current month total (approximation — all data in that month)
-  const curMTD=(p[curYr]||{})[curMo]||0;
-  const lyMTD=(p[prevYr]||{})[curMo]||0;
-  document.getElementById('curMTD').textContent=fmtR(curMTD);
-  document.getElementById('lyMTD').textContent=fmtR(lyMTD);
+  // YTD = sum of fiscal months in curFY up to and including the current calendar month.
+  // Fiscal months elapsed: all FISCAL_MONTHS entries up to and including today's calendar month.
+  const curCalMo = today.getMonth() + 1; // 1-12
+  const curFiIdx = FISCAL_MONTHS.indexOf(curCalMo); // 0-based position in fiscal order
+
+  // Collect the fiscal months elapsed so far this FY
+  const elapsedFiscalMonths = FISCAL_MONTHS.slice(0, curFiIdx + 1);
+
+  let curYTD  = 0;
+  let prevYTD = 0;
+  elapsedFiscalMonths.forEach(mo => {
+    curYTD  += (p[curFY] ||{})[mo] || 0;
+    prevYTD += (p[prevFY]||{})[mo] || 0;
+  });
+
+  document.getElementById('prevYTD').textContent = fmtR(prevYTD);
+  document.getElementById('curYTD').textContent  = fmtR(curYTD);
+
+  const ytdPct = prevYTD > 0 ? (curYTD - prevYTD) / prevYTD * 100 : 0;
+  const deltaEl = document.getElementById('ytdDelta');
+  deltaEl.textContent  = fmtPct(ytdPct);
+  deltaEl.className    = 'kpi-delta ' + (ytdPct >= 0 ? 'up' : 'down');
+
+  // ── MTD KPIs ──
+  // Current MTD = curFY data for current calendar month
+  // Previous year MTD = prevFY data for same calendar month
+  const curMTD = (p[curFY] ||{})[curCalMo] || 0;
+  const lyMTD  = (p[prevFY]||{})[curCalMo] || 0;
+  document.getElementById('curMTD').textContent = fmtR(curMTD);
+  document.getElementById('lyMTD').textContent  = fmtR(lyMTD);
 }
 
-function renderTable(p, maxYr){
-  const allYears=Object.keys(p).map(Number).sort();
-  const curYr=2026;
+function renderTable(p){
+  // FY keys in the pivot, sorted ascending
+  const allFYs = Object.keys(p).map(Number).sort();
 
-  // Year totals
-  const yearTotals={};
-  allYears.forEach(y=>yearTotals[y]=Object.values(p[y]).reduce((a,v)=>a+v,0));
+  // Current FY = the one that contains today
+  const today = new Date();
+  const curFY = fiscalYear(today.getFullYear(), today.getMonth()+1);
 
-  // Row totals
-  const rowTotals={};
-  FISCAL_MONTHS.forEach(m=>{rowTotals[m]=allYears.reduce((a,y)=>a+(p[y]&&p[y][m]?p[y][m]:0),0);});
+  // FY totals: sum all 12 months for each FY
+  const fyTotals = {};
+  allFYs.forEach(fy => {
+    fyTotals[fy] = Object.values(p[fy]).reduce((a,v)=>a+v,0);
+  });
 
-  // Grand total
-  const grand=allYears.reduce((a,y)=>a+yearTotals[y],0);
+  // Table title shows the FY range, e.g. "FY2025 · Mar 2025 – Feb 2026"
+  const fyLabel = fy => {
+    const start = fiscalYearStart(fy);
+    const end   = fiscalYearEnd(fy);
+    const fmt   = d => d.toLocaleString('en-ZA',{month:'short',year:'numeric'});
+    return `FY${fy} (${fmt(start)} – ${fmt(end)})`;
+  };
+
+  // Column header: just "FY2025" style
+  const fyColLabel = fy => `FY${fy}`;
 
   let h=`<table>
 <thead><tr>
   <th>F.</th>
   <th>Month</th>
-  ${allYears.map(y=>`<th${y===curYr?' style="color:#f0bc30"':''}>${y}</th>`).join('')}
+  ${allFYs.map(fy=>`<th${fy===curFY?' style="color:#f0bc30"':''}>${fyColLabel(fy)}</th>`).join('')}
 </tr></thead><tbody>`;
 
-  FISCAL_MONTHS.forEach((mo,fi)=>{
-    const rowVals=allYears.map(y=>(p[y]&&p[y][mo]?p[y][mo]:0));
-    h+=`<tr>
+  FISCAL_MONTHS.forEach((mo, fi) => {
+    const rowVals = allFYs.map(fy => (p[fy]&&p[fy][mo] ? p[fy][mo] : 0));
+    h += `<tr>
   <td>${FISCAL_NOS[fi]}</td>
   <td>${FISCAL_LABELS[fi]}</td>
-  ${allYears.map((y,i)=>{
-    const v=rowVals[i];
-    if(!v||v===0)return`<td class="zero">-</td>`;
-    const cls=heatClass(v,rowVals)+(y===curYr?' cur-yr':'');
+  ${allFYs.map((fy,i) => {
+    const v = rowVals[i];
+    if(!v||v===0) return`<td class="zero">-</td>`;
+    const cls = heatClass(v,rowVals) + (fy===curFY?' cur-yr':'');
     return`<td class="${cls}">${fmtR(v)}</td>`;
   }).join('')}
 </tr>`;
@@ -312,11 +366,17 @@ function renderTable(p, maxYr){
 
   h+=`</tbody><tfoot><tr>
   <td></td>
-  <td>Grand total</td>
-  ${allYears.map(y=>`<td class="${y===curYr?'cur-yr':''}">${fmtR(yearTotals[y])}</td>`).join('')}
+  <td>FY total</td>
+  ${allFYs.map(fy=>`<td class="${fy===curFY?'cur-yr':''}">${fmtR(fyTotals[fy])}</td>`).join('')}
 </tr></tfoot></table>`;
 
-  document.getElementById('tblArea').innerHTML=h;
+  document.getElementById('tblArea').innerHTML = h;
+
+  // Update table title with current FY range
+  const today2 = new Date();
+  const cFY = fiscalYear(today2.getFullYear(), today2.getMonth()+1);
+  document.getElementById('tableTitle').textContent =
+    `FY / SALES · current: FY${cFY}`;
 }
 
 async function loadData(){
@@ -331,13 +391,14 @@ async function loadData(){
     const text=await r.text();
     if(!text||text.length<50)throw new Error('Empty response');
     const rows=parseCSV(text);
-    const{p,maxYr,maxMo,maxDay}=buildPivot(rows);
+    const{p,maxYr,maxMo,maxDay,maxFY}=buildPivot(rows);
     renderKPIs(p,maxYr,maxMo,maxDay);
-    renderTable(p,maxYr);
+    renderTable(p);
     const now=new Date().toLocaleString('en-ZA',{dateStyle:'medium',timeStyle:'short'});
     document.getElementById('lastUpd').textContent='Updated: '+now;
+    const fyKeys = Object.keys(p).sort().map(k=>'FY'+k).join(', ');
     document.getElementById('footnote').textContent=
-      rows.length.toLocaleString()+' source rows · years '+Object.keys(p).sort().join(', ')+' · live from Google Sheets';
+      rows.length.toLocaleString()+' source rows · '+fyKeys+' · live from Google Sheets';
     setStatus('Loaded','ready');
   }catch(e){
     setStatus('Error: '+e.message,'error');
